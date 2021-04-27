@@ -49,9 +49,10 @@ const JD_API_HOST = 'https://api.m.jd.com/api';
         return;
     }
     let url = rraUrl()
-    console.log(`获取龙王信号: ${url}`)
+    console.log(`召唤龙王: ${url}`)
     let code = await redRainId(url)
-    console.log(`获取完成`)
+    code = await retryCdn(code, url)
+    console.log(`召唤完成`)
 
     if(!code){
         $.log(`今日龙王🐲出差，天气晴朗☀️，改日再来～\n`)
@@ -209,6 +210,7 @@ function redRainId(url) {
             try {
                 if (err) {
                     console.log(`${JSON.stringify(err)}`)
+                    id = 'error'
                 } else {
                     if(!!data){
                         id = data.replace(/[\r\n]/g,"")
@@ -225,8 +227,20 @@ function redRainId(url) {
     })
 }
 
+async function retryCdn(code, url) {
+    if (code === 'error') {
+        let items = url.split("/")
+        let fn = items[items.length-1]
+        let cndUrl = `http://jd-1255594201.file.myqcloud.com/${fn}`
+        $.log(`召唤龙王失败, 召唤神龙: ${cndUrl}`)
+        code = await redRainId(cndUrl)
+    }
+
+    return code === 'error' ? '' : code
+}
+
 function rraUrl() {
-    let url = 'https://raw.githubusercontent.com/nianyuguai/longzhuzhu/main/qx/jd-live-rain-v2.json'
+    let url = 'https://raw.githubusercontent.com/nianyuguai/longzhuzhu/main/qx/jd-live-rain.json'
     if($.isNode() && process.env.JD_RRA_URL){
         url = process.env.JD_RRA_URL
     }else if($.getdata('jdRRAUrl')){
